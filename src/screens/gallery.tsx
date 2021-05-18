@@ -1,22 +1,44 @@
-import React from 'react';
-import {Dimensions, Image, StyleSheet, Text, View} from 'react-native';
+import {useFocusEffect} from '@react-navigation/core';
+import React, {useCallback, useState} from 'react';
+import {FlatList, Image, Text, View} from 'react-native';
+import RNFS from 'react-native-fs';
+import {folder} from './camera';
 
-const {height} = Dimensions.get('window');
+const GalleryScreen = () => {
+  const [pics, setPics] = useState<RNFS.ReadDirItem[]>();
 
-const GalleryScreen = (props: {route: {params: {uri: any}}}) => {
-  const {uri} = props.route.params;
-  // console.log(uri);
+  useFocusEffect(
+    useCallback(() => {
+      const effect = async () => {
+        const res = await RNFS.readDir(folder);
+        console.log(res.map(pic => pic.path));
+        setPics(res);
+      };
+      effect();
+    }, []),
+  );
+
   return (
-    <View style={{marginHorizontal: 20, marginVertical: 20}}>
+    <View style={{marginHorizontal: 10, marginVertical: 20}}>
       <Text style={{fontSize: 18, marginBottom: 10}}>My Gallery</Text>
-      <Image
-        style={{width: 120, height: 120, borderRadius: 10}}
-        source={{uri: uri}}
+      <FlatList
+        data={pics}
+        keyExtractor={item => item.name}
+        numColumns={2}
+        renderItem={({item}) => (
+          <Image
+            key={item.name}
+            style={{
+              flex: 1,
+              aspectRatio: 1,
+              margin: 5,
+              borderRadius: 10,
+            }}
+            source={{uri: 'file://' + item.path}}
+          />
+        )}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({});
-
 export default GalleryScreen;
